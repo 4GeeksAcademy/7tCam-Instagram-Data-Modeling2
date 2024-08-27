@@ -1,7 +1,7 @@
 import os
 import sys
 from sqlalchemy import Column, ForeignKey, Integer, String, Table, Enum
-from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.orm import relationship, declarative_base, backref
 from sqlalchemy import create_engine
 from eralchemy2 import render_er
 # para pract.
@@ -27,27 +27,17 @@ followers = Table('followers',
     Column('user_from_id', Integer, ForeignKey('user.id'), primary_key=True),
     Column('user_to_id', Integer, ForeignKey('user.id'), primary_key=True)
 )
-class Follower(Base):
-    __tablename__ = 'folllowers'
-    # Here we define columns for the table person
-    # Notice that each column is also a normal Python instance attribute.
-    id = Column(Integer, primary_key=True)
-
-
-#commet 
-# class Address(db.Model):
-    # id = db.Column(db.Integer, primary_key=True)
-    # email = db.Column(db.String(120), nullable=False)
-    # person_id = db.Column(db.Integer, db.ForeignKey('person.id'),
-    #     nullable=False)
-
-
+# class Follower(Base):
+#     __tablename__ = 'follower'
+#     # Here we define columns for the table person
+#     # Notice that each column is also a normal Python instance attribute.
+#     id = Column(Integer, primary_key=True)
 class Comment(Base):
     __tablename__ = 'comment'
     # Here we define columns for the table person
     # Notice that each column is also a normal Python instance attribute.
     id = Column(Integer, primary_key=True)
-    commment_text = Column(String)
+    comment_text = Column(String)
     #            entero       | de donde viene el id foraneo |
     author_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     post_id = Column(Integer, ForeignKey('post.id'), nullable=False)
@@ -58,8 +48,8 @@ class Post(Base):
     # Notice that each column is also a normal Python instance attribute.
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    post = relationship('Comment', backref='post', lazy=True)
-    post = relationship('Media', backref='post', lazy=True)
+    comment = relationship('Comment', backref='post', lazy=True)
+    media = relationship('Media', backref='post', lazy=True)
 
 
 class Media(Base):
@@ -67,9 +57,9 @@ class Media(Base):
     # Here we define columns for the table person
     # Notice that each column is also a normal Python instance attribute.
     id = Column(Integer, primary_key=True)
-    typ = Column(Enum(),nullable=False)
-    url = Column(String)
-    user_id = Column(Integer, ForeignKey('post.id'), nullable=False)
+    typ = Column(Enum("mp3","mp4","jpeg","png"),nullable=False)
+    url = Column(String(250))
+    post_id = Column(Integer, ForeignKey('post.id'), nullable=False)
 
 
 # class Person(db.Model):
@@ -93,10 +83,11 @@ class User(Base):
     lastname = Column(String(250), nullable=False)
     # relationship se coloca en la tabla donde esta el id principal(funcion que relaciona tablas)
     # name coherente      |nameClase donde esata la clave foranea| nombre de la tabla actual
-    comment = relationship('Commet', backref='user', lazy=True)
-    post = relationship('Post', backref='user', lazy=True)
-
-
+    comments = relationship('Comment', backref='user', lazy=True)
+    user_post = relationship('Post', backref='user', lazy=True)
+    # relacion de muchos a muchos
+    following = relationship('Follower', secondary=followers, lazy='subquery',
+        backref=backref('user', lazy=True))
     def to_dict(self):
         return {}
 
